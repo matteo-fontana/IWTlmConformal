@@ -5,7 +5,7 @@
 # dove y è un dataset funzionale (matrice n*p)
 # x1 e x2 possono essere funzionali (matrici n*p) o scalari (vettori n)
 # il test dell'interazione tra covariate scalari e funzionali (tipo y ~ x1*x2) non funziona, per ora va fatto a mano costruendo le covariate dummy
-IWTlmFoF_notest <- function(formula,B=1000,method='residuals'){
+IWTlmFoF_notest <- function(formula,method='residuals'){
 
 #define functions for extracting things
     
@@ -26,6 +26,15 @@ IWTlmFoF_notest <- function(formula,B=1000,method='residuals'){
   mf = model.frame(formula)
   data = model.response(mf)
   coeff <- data
+  
+  #Split Dataset:
+  
+  i1 = sample(1:n,floor(n/2))
+  i2 = (1:n)[-i1]
+  n1 = length(i1)
+  n2 = length(i2)
+
+  
   
   
   variables = attr(terms(formula),"term.labels") #all.vars(formula)[-1] #colnames(design.matrix.temp)
@@ -71,10 +80,8 @@ IWTlmFoF_notest <- function(formula,B=1000,method='residuals'){
   
 #setting up the model is complete.  
   
-  ############################################################
-  
-  print('First step: basis expansion')
-  #splines coefficients:
+############################################################
+
   coeff <- eval <- data
   p <- dim(coeff)[2]
   
@@ -137,15 +144,15 @@ IWTlmFoF_notest <- function(formula,B=1000,method='residuals'){
   npt <- J
   R2.t = colSums((fitted.t - matrix(data=ybar.t,nrow=n,ncol=npt,byrow=TRUE))^2)/colSums((data.eval - matrix(data=ybar.t,nrow=n,ncol=npt,byrow=TRUE))^2)
 
-  ITPresult <- list(call=cl,basis='B-spline',
+  IWTresult <- list(call=cl,basis='B-spline',
                     data.eval=data.eval,
                     coeff.regr.eval=coeff.t,
                     fitted.eval=fitted.t,
                     residuals.eval=residuals.t,
                     R2.eval=R2.t)
 
-  class(ITPresult) = 'IWTlm'
-  return(ITPresult)
+  class(IWTresult) = 'IWTlm'
+  return(IWTresult)
 }
 
 
