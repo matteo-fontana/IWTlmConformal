@@ -1,4 +1,7 @@
+
 load('test_data.rdata')
+
+require(roahd)
 formula = co2_mat ~ individual + interac
 alpha=.05
 
@@ -115,16 +118,16 @@ i2_residuals=i2_data-i2_forecast
 
 abs_i2_residuals=abs(i2_residuals)
 
-matplot(t(abs_i2_residuals),type='l')
+#matplot(t(abs_i2_residuals),type='l')
 
-library(roahd)        
+     
 fdepth=MBD(abs_i2_residuals)
 
 val=sort(fdepth)[ceiling((n/2)*(1-alpha))]
 
 dt=abs_i2_residuals[which(fdepth==val),]
 
-forecast=newdata3 %*% coeff.t
+forecast=newdata %*% coeff.t
 lwr=forecast-dt
 upr=forecast+dt
 
