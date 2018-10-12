@@ -1,4 +1,6 @@
-predictSplit=function(formula,newdata,alpha=0.01, depthType='MBD'){
+predictSplit=function(formula,newdata,alpha=0.01,rho=0.5, depthType='MBD'){
+  
+  
   
   require(roahd)
   extract.residuals = function(regr){
@@ -11,33 +13,34 @@ predictSplit=function(formula,newdata,alpha=0.01, depthType='MBD'){
     return(regr$coefficients)
   }
   
-  env <- environment(formula)
-  cl <- match.call()
-  design.matrix.temp = model.matrix(formula)
+
   mf = model.frame(formula)
   data = model.response(mf)
-  coeff <- data
   
   n <- dim(data)[1]
   J <- dim(data)[2]
   
-  #Split Dataset:
+
   
-  i1 = sample(1:n,floor(n/2))
+  #Split Dataset:
+ 
+  i1 = sample(1:n,floor(n*rho))
   i2 = (1:n)[-i1]
   n1 = length(i1)
   n2 = length(i2)
   
-  design.matrix.temp_i1=design.matrix.temp[i1,]
-  
+  design.matrix.temp = model.matrix(formula)[i1,]
+  mf = model.frame(formula)[i1,]
+  data = model.response(mf)
+  coeff <- data
   
   
   
   variables = attr(terms(formula),"term.labels") #all.vars(formula)[-1] #colnames(design.matrix.temp)
   y.name = all.vars(formula)[1]
   
-  assign <- attr(design.matrix.temp,'assign')
-  contrast <- attr(design.matrix.temp,'contrast')
+  assign <- attr(model.matrix(formula),'assign')
+  contrast <- attr(model.matrix(formula),'contrast')
   length.vars <- numeric(length(variables)+1)
   
   for(var in 0:(length(variables))){
@@ -101,8 +104,8 @@ predictSplit=function(formula,newdata,alpha=0.01, depthType='MBD'){
   
   ####Second part: forecast, then compute abs residuals
   
-  i2_data=data[i2,]
-  i2_design_matrix=design.matrix.temp[i2,]
+  i2_data=model.response(model.frame(formula))[i2,]
+  i2_design_matrix=model.matrix(formula)[i2,]
   
   i2_forecast=i2_design_matrix %*% coeff.t
   i2_residuals=i2_data-i2_forecast
@@ -123,7 +126,7 @@ predictSplit=function(formula,newdata,alpha=0.01, depthType='MBD'){
   
 
   
-  val=sort(fdepth,decreasing = T)[ceiling((n/2)*(1-alpha))]
+  val=sort(fdepth,decreasing = T)[ceiling(n*(1-rho)*(1-alpha))]
   
   dt=abs_i2_residuals[which(fdepth==val),]
   
@@ -133,7 +136,7 @@ predictSplit=function(formula,newdata,alpha=0.01, depthType='MBD'){
   
   output=rbind(forecast,lwr,upr)
   rownames(output)=c('lvl','lwr','upr')
-  colnames(output)=colnames(object$data)
+  colnames(output)=colnames(data)
   matplot(t(output),type='l')
   return(output)
   
