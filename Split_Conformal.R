@@ -108,33 +108,38 @@ predictSplit=function(formula,newdata,alpha=0.01,rho=0.5, depthType='MBD'){
   i2_design_matrix=model.matrix(formula)[i2,]
   
   i2_forecast=i2_design_matrix %*% coeff.t
-  i2_residuals=i2_data-i2_forecast
+  i2_residuals=data.frame(i2_data-i2_forecast)
   
-  abs_i2_residuals=i2_residuals
+
+
   
   #matplot(t(abs_i2_residuals),type='l')
     switch(depthType,
-         'BD'={fdepth=BD(abs_i2_residuals)},
-         'EI'={fdepth=EI(abs_i2_residuals)},
-         'HI'={fdepth=HD(abs_i2_residuals)},
-         'HRD'={fdepth=HRD(abs_i2_residuals)},
-         'MBD'={fdepth=MBD(abs_i2_residuals,manage_ties = T)},
-         'MEI'={fdepth=MEI(abs_i2_residuals)},
-         'MHI'={fdepth=MHI(abs_i2_residuals)},
-         'MHRD'={fdepth=MHRD(abs_i2_residuals)}
+         'BD'={fdepth=BD(i2_residuals)},
+         'EI'={fdepth=EI(i2_residuals)},
+         'HI'={fdepth=HD(i2_residuals)},
+         'HRD'={fdepth=HRD(i2_residuals)},
+         'MBD'={fdepth=MBD(i2_residuals,manage_ties = F)},
+         'MEI'={fdepth=MEI(i2_residuals)},
+         'MHI'={fdepth=MHI(i2_residuals)},
+         'MHRD'={fdepth=MHRD(i2_residuals)}
          )
-  
 
   
-  val=sort(fdepth,decreasing = T)[ceiling(n*(1-rho)*(1-alpha))]
+  dp_s = sort(fdepth, decreasing = TRUE)
+  index = order(fdepth, decreasing = TRUE)
   
-  dt=abs_i2_residuals[which(fdepth==val),]
+  k = ceiling(n*rho * (1-alpha))
+  center = i2_residuals[index[1:k],]
+  inf = apply(center, 2, min)
+  sup = apply(center, 2, max)
   
   forecast=newdata %*% coeff.t
-  lwr=forecast-dt
-  upr=forecast+dt
   
-  output=rbind(forecast,lwr,upr)
+  lwr=(forecast+inf)
+  upr=(forecast + sup)
+  
+  output=rbind(data.frame(forecast),data.frame(lwr),data.frame(upr))
   rownames(output)=c('lvl','lwr','upr')
   colnames(output)=colnames(data)
   matplot(t(output),type='l')
